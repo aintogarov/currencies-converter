@@ -1,0 +1,31 @@
+ext.versions = [
+        compileSdk         : 28,
+        targetSdk          : 28,
+        minSdk             : 21,
+        kotlin             : '1.3.40',
+        androidGradlePlugin: '3.4.2',
+
+        appCompat          : '1.0.2',
+        rxJava             : '2.1.14',
+        rxAndroid          : '2.0.2',
+        rxRelay            : '2.1.0',
+        androidKtx         : '1.0.1',
+        recyclerView       : '1.0.0',
+        constraintLayout   : '1.1.3'
+]
+
+ext.gradlePlugins = [
+        kotlin : "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin",
+        android: "com.android.tools.build:gradle:$versions.androidGradlePlugin"
+]
+
+ext.libraries = [
+        kotlinStdJdk7   : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin",
+        appCompat       : "androidx.appcompat:appcompat:$versions.appCompat",
+        rxJava          : "io.reactivex.rxjava2:rxjava:$versions.rxJava",
+        rxAndroid       : "io.reactivex.rxjava2:rxandroid:$versions.rxAndroid",
+        rxRelay         : "com.jakewharton.rxrelay2:rxrelay:$versions.rxRelay",
+        androidKtx      : "androidx.core:core-ktx:$versions.androidKtx",
+        recyclerView    : "androidx.recyclerview:recyclerview:$versions.recyclerView",
+        constraintLayout: "androidx.constraintlayout:constraintlayout:$versions.constraintLayout"
+]
