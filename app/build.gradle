@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+
 apply from: file('../dependencies.gradle')
 
 android {
@@ -32,4 +34,10 @@ dependencies {
     implementation libraries.rxRelay
     implementation libraries.recyclerView
     implementation libraries.constraintLayout
+    implementation libraries.retrofit
+    implementation libraries.retrofitRxAdapter
+    implementation libraries.retrofitGson
+    implementation libraries.dagger
+    kapt libraries.daggerCompiler
+    implementation libraries.timber
 }
