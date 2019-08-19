@@ -6,7 +6,7 @@ class RatesDispatchConfig(
     val interval: Long
 ) {
     companion object {
-        val DEFAULT = RatesDispatchConfig(baseCurrency = "EUR", interval = 1000L)
+        val DEFAULT = RatesDispatchConfig(baseCurrency = "EUR", interval = 5000L)
     }
 }
 

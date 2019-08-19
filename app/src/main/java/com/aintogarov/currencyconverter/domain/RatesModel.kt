@@ -21,6 +21,7 @@ class RatesModel(
     fun observe(): Observable<RatesState> = ratesStateBehaviorRelay
 
     fun startUpdates() {
+        disposable?.dispose()
         val cache = storage.rates(config.baseCurrency)
             .map<RatesState>(RatesState::Loaded)
             .toObservable()
