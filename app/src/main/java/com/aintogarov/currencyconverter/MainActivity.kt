@@ -6,7 +6,6 @@ import androidx.fragment.app.FragmentActivity
 import com.aintogarov.currencyconverter.di.Injector
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
 import com.aintogarov.currencyconverter.domain.RatesModel
-import timber.log.Timber
 
 
 class MainActivity : FragmentActivity() {
@@ -20,11 +19,6 @@ class MainActivity : FragmentActivity() {
         currenciesModel = Injector.appComponent.currenciesModel()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        currenciesModel.observe()
-            .subscribe {
-                Timber.d(it.toString())
-            }
     }
 
     override fun onStart() {

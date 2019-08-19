@@ -3,9 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <fragment
-        android:name="com.aintogarov.currencyconverter.presentation.CurrencyConverterFragment"
-        android:id="@+id/currency_converter_fragment"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/currencies_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
