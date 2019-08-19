@@ -35,17 +35,13 @@ class CurrenciesAdapter(
         diffResult?.dispatchUpdatesTo(this)
     }
 
-    interface CurrencyClickListener {
-        fun onClick(currencyAmount: CurrencyAmount)
-    }
-
     inner class CurrencyAmountViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
         private val currencyCodeTextView: TextView = view.findViewById(R.id.currency_code_text_view)
         private val amountEditText: EditText = view.findViewById(R.id.amount_edit_text)
 
         fun bind(currencyAmount: CurrencyAmount) {
             currencyCodeTextView.text = currencyAmount.currency
-            amountEditText.setText(currencyAmount.value.toString())
+            amountEditText.setText(currencyAmount.value.toEngineeringString())
 
             view.setOnClickListener { clickListener.invoke(currencyAmount) }
         }

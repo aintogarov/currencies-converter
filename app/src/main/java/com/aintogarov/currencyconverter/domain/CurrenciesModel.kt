@@ -10,6 +10,7 @@ import io.reactivex.functions.Function3
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
+import java.math.BigDecimal
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -102,8 +103,8 @@ class CurrenciesModel(
 
     private fun calculate(container: Container): List<CurrencyAmount> {
         val (moneyAmount, ratesMap, currencyList) = container
-        val currentRateToBase: Double =
-            ratesMap[moneyAmount.currency] ?: 1.0
+        val currentRateToBase: BigDecimal =
+            ratesMap[moneyAmount.currency] ?: BigDecimal("1.0")
         val normalizedAmount = moneyAmount.value * currentRateToBase
 
         val result = ArrayList<CurrencyAmount>()
@@ -117,7 +118,7 @@ class CurrenciesModel(
 
     private data class Container(
         val moneyAmountState: MoneyAmountState,
-        val ratesMap: Map<String, Double>,
+        val ratesMap: Map<String, BigDecimal>,
         val currencyList: List<String>
     )
 

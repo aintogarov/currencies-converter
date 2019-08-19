@@ -2,6 +2,7 @@ package com.aintogarov.currencyconverter.domain
 
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
+import java.math.BigDecimal
 
 
 class MoneyAmountModel {
@@ -12,7 +13,7 @@ class MoneyAmountModel {
     }
 
     @Synchronized
-    fun push(currency: String, value: Double) {
+    fun push(currency: String, value: BigDecimal) {
         val nextState = MoneyAmountState(currency, value)
         moneyAmountBehaviorRelay.accept(nextState)
     }
