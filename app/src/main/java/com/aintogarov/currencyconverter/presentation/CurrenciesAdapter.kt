@@ -15,7 +15,7 @@ class CurrenciesAdapter(
     private val clickListener: (CurrencyAmount) -> Unit
 ) : RecyclerView.Adapter<CurrenciesAdapter.CurrencyAmountViewHolder>() {
 
-    private var items: List<CurrencyAmount> = emptyList()
+    private var items: MutableList<CurrencyAmount> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CurrencyAmountViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -25,14 +25,19 @@ class CurrenciesAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    override fun getItemId(position: Int): Long {
+        return items[position].currency.hashCode().toLong()
+    }
+
     override fun onBindViewHolder(holder: CurrencyAmountViewHolder, position: Int) {
         val item = items[position]
         holder.bind(item)
     }
 
     fun applyItems(items: List<CurrencyAmount>, diffResult: DiffUtil.DiffResult?) {
-        this.items = items
         diffResult?.dispatchUpdatesTo(this)
+        this.items.clear()
+        this.items.addAll(items)
     }
 
     inner class CurrencyAmountViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
@@ -44,6 +49,12 @@ class CurrenciesAdapter(
             amountEditText.setText(currencyAmount.value.toEngineeringString())
 
             view.setOnClickListener { clickListener.invoke(currencyAmount) }
+            amountEditText.setOnFocusChangeListener { view, focused ->
+                if (focused) {
+                    val textLength = amountEditText.length()
+                    amountEditText.setSelection(textLength)
+                }
+            }
         }
     }
 }

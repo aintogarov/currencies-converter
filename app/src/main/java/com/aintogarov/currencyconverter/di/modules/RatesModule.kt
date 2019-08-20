@@ -41,8 +41,8 @@ class RatesModule {
         return CurrenciesModel(
             storage = storage,
             config = RatesDispatchConfig.DEFAULT,
-            moneyAmountObservable = moneyAmountModel.observe(),
-            ratesStateObservable = ratesModel.observe()
-        ).apply { pushCurrencyToTop("EUR") }
+            moneyAmountModel = moneyAmountModel,
+            ratesModel = ratesModel
+        )
     }
 }

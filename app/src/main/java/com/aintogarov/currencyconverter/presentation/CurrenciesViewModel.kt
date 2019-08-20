@@ -1,10 +1,7 @@
 package com.aintogarov.currencyconverter.presentation
 
 import androidx.recyclerview.widget.DiffUtil
-import com.aintogarov.currencyconverter.domain.CurrenciesModel
-import com.aintogarov.currencyconverter.domain.CurrenciesState
-import com.aintogarov.currencyconverter.domain.CurrencyAmount
-import com.aintogarov.currencyconverter.domain.MoneyAmountModel
+import com.aintogarov.currencyconverter.domain.*
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
 import io.reactivex.Scheduler
@@ -25,16 +22,18 @@ class CurrenciesViewModel(
         CurrenciesWithDiff(currenciesList = emptyList(), diffResult = null)
     )
 
+    private val currenciesWithDiffObservable = currenciesModel.observe()
+        .observeOn(workerScheduler)
+        .withLatestFrom(currenciesWithDiffRelay,
+            BiFunction { currenciesState: CurrenciesState, currenciesWithDiff: CurrenciesWithDiff ->
+                val old = currenciesWithDiff.currenciesList
+                val new = currenciesState.list
+                val diffResult = DiffUtil.calculateDiff(CurrenciesAmountDiffCallback(old, new))
+                CurrenciesWithDiff(new, diffResult)
+            })
+
     fun start() {
-        disposable += currenciesModel.observe()
-            .observeOn(workerScheduler)
-            .withLatestFrom(currenciesWithDiffRelay,
-                BiFunction { currenciesState: CurrenciesState, currenciesWithDiff: CurrenciesWithDiff ->
-                    val old = currenciesWithDiff.currenciesList
-                    val new = currenciesState.list
-                    val diffResult = DiffUtil.calculateDiff(CurrenciesAmountDiffCallback(old, new))
-                    CurrenciesWithDiff(new, diffResult)
-                })
+        disposable += currenciesWithDiffObservable
             .subscribe(currenciesWithDiffRelay::accept)
 
         disposable += currencyClicks
@@ -47,5 +46,13 @@ class CurrenciesViewModel(
 
     fun currenciesWithDiff(): Observable<CurrenciesWithDiff> {
         return currenciesWithDiffRelay.observeOn(uiScheduler)
+    }
+
+    fun observeReordering(): Observable<ReorderingEvent> {
+        return Observable.zip(currenciesModel.observeReordering(), currenciesWithDiffObservable,
+            BiFunction { reorderingEvent: ReorderingEvent, _: CurrenciesWithDiff ->
+                reorderingEvent
+            })
+            .observeOn(uiScheduler)
     }
 }

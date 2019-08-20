@@ -1,6 +1,8 @@
 package com.aintogarov.currencyconverter.presentation
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,10 +25,23 @@ class CurrencyConverterFragment : Fragment() {
     private lateinit var currenciesRecyclerView: RecyclerView
     private lateinit var viewModel: CurrenciesViewModel
 
+    private val handler = Handler(Looper.getMainLooper())
     private val currencyClicks: Relay<CurrencyAmount> = PublishRelay.create()
     private val viewDisposable: CompositeDisposable = CompositeDisposable()
 
     private val adapter = CurrenciesAdapter(clickListener = currencyClicks::accept)
+
+    private val requestFocusRunnable = object : Runnable {
+        override fun run() {
+            val viewHolder = currenciesRecyclerView.findViewHolderForAdapterPosition(0)
+            if (viewHolder != null && viewHolder.adapterPosition == 0) {
+                currenciesRecyclerView.scrollToPosition(0)
+                viewHolder.itemView.requestFocus()
+            } else {
+                handler.postDelayed(this, UPDATE_SCROLL_AND_FOCUS_DELAY)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +65,7 @@ class CurrencyConverterFragment : Fragment() {
         currenciesRecyclerView = view.findViewById(R.id.currencies_recycler_view)
         currenciesRecyclerView.layoutManager = LinearLayoutManager(context!!)
         currenciesRecyclerView.adapter = adapter
+        currenciesRecyclerView.setHasFixedSize(true)
     }
 
     override fun onStart() {
@@ -61,6 +77,9 @@ class CurrencyConverterFragment : Fragment() {
         super.onResume()
         viewDisposable += viewModel.currenciesWithDiff()
             .subscribe { adapter.applyItems(it.currenciesList, it.diffResult) }
+
+        viewDisposable += viewModel.observeReordering()
+            .subscribe { handler.postDelayed(requestFocusRunnable, UPDATE_SCROLL_AND_FOCUS_DELAY) }
     }
 
     override fun onPause() {
@@ -71,5 +90,9 @@ class CurrencyConverterFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         viewModel.stop()
+    }
+
+    private companion object {
+        const val UPDATE_SCROLL_AND_FOCUS_DELAY = 8L
     }
 }

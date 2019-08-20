@@ -7,6 +7,7 @@ import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
 import timber.log.Timber
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 
@@ -29,13 +30,18 @@ class RatesModel(
         val network = Observable.interval(0L, config.interval, TimeUnit.MILLISECONDS)
             .map { config.baseCurrency }
             .flatMapSingle(networkApi::rates)
+            .map { ratedDto ->
+                val rates = LinkedHashMap<String, BigDecimal>()
+                rates[config.baseCurrency] = BigDecimal("1.0")
+                rates.putAll(ratedDto.rates)
+                return@map ratedDto.copy(rates = rates)
+            }
             .map<RatesState>(RatesState::Loaded)
             .onErrorResumeNext(this::handleNetworkError)
 
         disposable = Observable.merge(cache, network)
             .startWith(RatesState.Empty)
             .doOnNext { Timber.d(it.toString()) }
-            .doOnSubscribe { Timber.d("onSubscribe") }
             .subscribe(ratesStateBehaviorRelay::accept)
     }
 

@@ -2,7 +2,6 @@ package com.aintogarov.currencyconverter.data.storage
 
 import com.aintogarov.currencyconverter.data.network.dto.RatesDto
 import io.reactivex.Maybe
-import java.math.BigDecimal
 
 
 class StorageImpl : Storage {
@@ -13,7 +12,7 @@ class StorageImpl : Storage {
 
     override fun rates(base: String): Maybe<RatesDto> {
         return Maybe.fromCallable {
-            RatesDto("EUR", mapOf("USD" to BigDecimal("1.6")))
+            null
         }
     }
 

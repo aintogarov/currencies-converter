@@ -3,14 +3,16 @@ package com.aintogarov.currencyconverter.domain
 import com.aintogarov.currencyconverter.data.network.dto.RatesDto
 import com.aintogarov.currencyconverter.data.storage.Storage
 import com.jakewharton.rxrelay2.BehaviorRelay
+import com.jakewharton.rxrelay2.PublishRelay
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Function3
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import timber.log.Timber
 import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -18,13 +20,14 @@ import kotlin.collections.ArrayList
 class CurrenciesModel(
     private val storage: Storage,
     private val config: RatesDispatchConfig,
-    moneyAmountObservable: Observable<MoneyAmountState>,
-    ratesStateObservable: Observable<RatesState>
+    private val moneyAmountModel: MoneyAmountModel,
+    ratesModel: RatesModel
 ) {
     private val currenciesStateBehaviorRelay = BehaviorRelay.create<CurrenciesState>()
+    private val reorderingBus = PublishRelay.create<ReorderingEvent>()
     private val orderBehaviorRelay = BehaviorRelay.create<List<String>>()
 
-    private val rates = ratesStateObservable
+    private val rates = ratesModel.observe()
         .filter { it is RatesState.Loaded }
         .map { it as RatesState.Loaded }
         .map { it.ratesDto }
@@ -41,13 +44,12 @@ class CurrenciesModel(
         })
 
     private val currencies = Observable.combineLatest<MoneyAmountState, RatesDto, List<String>, Container>(
-        moneyAmountObservable,
+        moneyAmountModel.observe(),
         rates,
         orderBehaviorRelay,
         Function3 { moneyAmount: MoneyAmountState, ratesDto: RatesDto, order: List<String> ->
             Container(moneyAmount, ratesDto.rates, order)
         })
-        .doOnNext { Timber.d("currencies: $it") }
         .filter { container: Container ->
             container.moneyAmountState.currency == container.currencyList.firstOrNull()
         }
@@ -60,19 +62,26 @@ class CurrenciesModel(
         return currenciesStateBehaviorRelay
     }
 
+    fun observeReordering(): Observable<ReorderingEvent> {
+        return reorderingBus
+    }
+
     @Synchronized
     fun pushCurrencyToTop(currency: String) {
         orderBehaviorRelay.value?.let { list ->
             val currentIndex = list.indexOf(currency)
             if (currentIndex == 0) return
 
-            val copyList = LinkedList(list)
-            if (currentIndex != -1) {
-                Collections.swap(copyList, 0, currentIndex)
-            } else {
-                copyList.addFirst(currency)
+            val currencyAmount = currenciesStateBehaviorRelay.value?.list?.get(currentIndex)
+            currencyAmount?.let {
+                moneyAmountModel.push(it.currency, it.value)
             }
+
+            val copyList = LinkedList(list)
+            Collections.swap(copyList, 0, currentIndex)
+
             orderBehaviorRelay.accept(copyList)
+            reorderingBus.accept(ReorderingEvent)
         }
     }
 
@@ -110,7 +119,7 @@ class CurrenciesModel(
         val result = ArrayList<CurrencyAmount>()
         for (currency in currencyList) {
             val rateToBase = ratesMap[currency] ?: continue
-            val value = normalizedAmount / rateToBase
+            val value = (normalizedAmount / rateToBase).round(MathContext(2, RoundingMode.HALF_UP))
             result += CurrencyAmount(currency, value)
         }
         return result
