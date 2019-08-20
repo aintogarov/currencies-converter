@@ -8,7 +8,6 @@ import com.aintogarov.currencyconverter.domain.RatesDispatchConfig
 import com.aintogarov.currencyconverter.domain.RatesModel
 import dagger.Module
 import dagger.Provides
-import java.math.BigDecimal
 import javax.inject.Singleton
 
 @Module(
@@ -22,13 +21,20 @@ class RatesModule {
     @Singleton
     @Provides
     fun provideRatesModel(networkApi: NetworkApi, storage: Storage): RatesModel {
-        return RatesModel(networkApi, storage, RatesDispatchConfig.DEFAULT)
+        return RatesModel(
+            networkApi = networkApi,
+            storage = storage,
+            config = RatesDispatchConfig.DEFAULT
+        )
     }
 
     @Singleton
     @Provides
-    fun provideMoneyAmountModel(): MoneyAmountModel {
-        return MoneyAmountModel().apply { push("EUR", BigDecimal("1.7")) }
+    fun provideMoneyAmountModel(storage: Storage): MoneyAmountModel {
+        return MoneyAmountModel(
+            storage = storage,
+            config = RatesDispatchConfig.DEFAULT
+        )
     }
 
     @Singleton

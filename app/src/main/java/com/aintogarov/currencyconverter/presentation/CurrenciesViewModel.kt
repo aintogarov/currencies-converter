@@ -1,7 +1,10 @@
 package com.aintogarov.currencyconverter.presentation
 
 import androidx.recyclerview.widget.DiffUtil
-import com.aintogarov.currencyconverter.domain.*
+import com.aintogarov.currencyconverter.domain.CurrenciesModel
+import com.aintogarov.currencyconverter.domain.CurrenciesState
+import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.ReorderingEvent
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
 import io.reactivex.Scheduler
@@ -12,9 +15,8 @@ import io.reactivex.rxkotlin.plusAssign
 
 class CurrenciesViewModel(
     private val currenciesModel: CurrenciesModel,
-    private val amountModel: MoneyAmountModel,
     private val currencyClicks: Observable<CurrencyAmount>,
-    private val workerScheduler: Scheduler,
+    workerScheduler: Scheduler,
     private val uiScheduler: Scheduler
 ) {
     private val disposable: CompositeDisposable = CompositeDisposable()

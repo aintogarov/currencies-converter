@@ -1,5 +1,6 @@
 package com.aintogarov.currencyconverter.di
 
+import com.aintogarov.currencyconverter.di.modules.AppModule
 import com.aintogarov.currencyconverter.di.modules.NetworkModule
 import com.aintogarov.currencyconverter.di.modules.RatesModule
 import com.aintogarov.currencyconverter.di.modules.StorageModule
@@ -11,6 +12,7 @@ import javax.inject.Singleton
 
 @Component(
     modules = [
+        AppModule::class,
         NetworkModule::class,
         StorageModule::class,
         RatesModule::class

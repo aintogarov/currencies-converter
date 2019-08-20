@@ -10,6 +10,7 @@ import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Function3
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
+import timber.log.Timber
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -31,6 +32,7 @@ class CurrenciesModel(
         .filter { it is RatesState.Loaded }
         .map { it as RatesState.Loaded }
         .map { it.ratesDto }
+        .doOnNext { Timber.d("rates: $it") }
 
     private val updateOrderObservable = rates.withLatestFrom(orderBehaviorRelay,
         BiFunction { ratesDto: RatesDto, order: List<String> ->
@@ -50,6 +52,7 @@ class CurrenciesModel(
         Function3 { moneyAmount: MoneyAmountState, ratesDto: RatesDto, order: List<String> ->
             Container(moneyAmount, ratesDto.rates, order)
         })
+        .doOnNext { Timber.d("container: ${it.moneyAmountState}; ${it.currencyList}") }
         .filter { container: Container ->
             container.moneyAmountState.currency == container.currencyList.firstOrNull()
         }
@@ -82,6 +85,8 @@ class CurrenciesModel(
 
             orderBehaviorRelay.accept(copyList)
             reorderingBus.accept(ReorderingEvent)
+
+            storage.writeOrder(copyList)
         }
     }
 
@@ -106,8 +111,7 @@ class CurrenciesModel(
     }
 
     fun onStop() {
-        disposable.dispose()
-        orderBehaviorRelay.value?.let { storage.writeOrder(it) }
+        disposable.clear()
     }
 
     private fun calculate(container: Container): List<CurrencyAmount> {

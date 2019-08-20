@@ -41,4 +41,7 @@ dependencies {
     implementation libraries.dagger
     kapt libraries.daggerCompiler
     implementation libraries.timber
+    implementation libraries.roomRuntime
+    kapt libraries.roomCompiler
+    implementation libraries.roomRxJava
 }

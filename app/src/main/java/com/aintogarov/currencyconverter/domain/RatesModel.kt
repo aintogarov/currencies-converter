@@ -21,7 +21,7 @@ class RatesModel(
 
     fun observe(): Observable<RatesState> = ratesStateBehaviorRelay
 
-    fun startUpdates() {
+    fun onStart() {
         disposable?.dispose()
         val cache = storage.rates(config.baseCurrency)
             .map<RatesState>(RatesState::Loaded)
@@ -36,6 +36,7 @@ class RatesModel(
                 rates.putAll(ratedDto.rates)
                 return@map ratedDto.copy(rates = rates)
             }
+            .doOnNext { storage.writeRates(it) }
             .map<RatesState>(RatesState::Loaded)
             .onErrorResumeNext(this::handleNetworkError)
 
@@ -45,7 +46,7 @@ class RatesModel(
             .subscribe(ratesStateBehaviorRelay::accept)
     }
 
-    fun stopUpdates() {
+    fun onStop() {
         disposable?.dispose()
     }
 

@@ -49,7 +49,6 @@ class CurrencyConverterFragment : Fragment() {
         val appComponent = Injector.appComponent
         viewModel = CurrenciesViewModel(
             currenciesModel = appComponent.currenciesModel(),
-            amountModel = appComponent.amountModel(),
             currencyClicks = currencyClicks,
             workerScheduler = Schedulers.computation(),
             uiScheduler = AndroidSchedulers.mainThread()
@@ -63,7 +62,7 @@ class CurrencyConverterFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         currenciesRecyclerView = view.findViewById(R.id.currencies_recycler_view)
-        currenciesRecyclerView.layoutManager = LinearLayoutManager(context!!)
+        currenciesRecyclerView.layoutManager = LinearLayoutManager(context)
         currenciesRecyclerView.adapter = adapter
         currenciesRecyclerView.setHasFixedSize(true)
     }
