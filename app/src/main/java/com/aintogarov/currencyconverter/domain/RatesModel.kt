@@ -3,9 +3,11 @@ package com.aintogarov.currencyconverter.domain
 import com.aintogarov.currencyconverter.data.network.NetworkApi
 import com.aintogarov.currencyconverter.data.storage.Storage
 import com.jakewharton.rxrelay2.BehaviorRelay
+import io.reactivex.Flowable
 import io.reactivex.Observable
+import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
-import io.reactivex.functions.BiFunction
+import io.reactivex.rxkotlin.zipWith
 import timber.log.Timber
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
@@ -14,7 +16,8 @@ import java.util.concurrent.TimeUnit
 class RatesModel(
     private val networkApi: NetworkApi,
     private val storage: Storage,
-    private val config: RatesDispatchConfig
+    private val config: RatesDispatchConfig,
+    private val workerScheduler: Scheduler
 ) {
     private val ratesStateBehaviorRelay = BehaviorRelay.create<RatesState>()
     private var disposable: Disposable? = null
@@ -24,25 +27,27 @@ class RatesModel(
     fun onStart() {
         disposable?.dispose()
         val cache = storage.rates(config.baseCurrency)
+            .subscribeOn(workerScheduler)
             .map<RatesState>(RatesState::Loaded)
             .toObservable()
 
-        val network = Observable.interval(0L, config.interval, TimeUnit.MILLISECONDS)
-            .map { config.baseCurrency }
-            .flatMapSingle(networkApi::rates)
-            .map { ratedDto ->
+        val network = networkApi.rates(config.baseCurrency)
+            .subscribeOn(workerScheduler)
+            .map { ratesDto ->
                 val rates = LinkedHashMap<String, BigDecimal>()
                 rates[config.baseCurrency] = BigDecimal("1.0")
-                rates.putAll(ratedDto.rates)
-                return@map ratedDto.copy(rates = rates)
+                rates.putAll(ratesDto.rates)
+                return@map ratesDto.copy(rates = rates)
             }
-            .doOnNext { storage.writeRates(it) }
             .map<RatesState>(RatesState::Loaded)
-            .onErrorResumeNext(this::handleNetworkError)
+            .retryWhen(this::handlerErrorWithRetry)
+            .repeatWhen { completed -> completed.delay(config.interval, TimeUnit.MILLISECONDS) }
+            .toObservable()
 
-        disposable = Observable.merge(cache, network)
+        disposable = cache.concatWith(network)
             .startWith(RatesState.Empty)
             .doOnNext { Timber.d(it.toString()) }
+            .onErrorReturn(RatesState::Error)
             .subscribe(ratesStateBehaviorRelay::accept)
     }
 
@@ -50,14 +55,18 @@ class RatesModel(
         disposable?.dispose()
     }
 
-    private fun handleNetworkError(throwable: Throwable): Observable<RatesState> {
-        return Observable.fromCallable { throwable }
-            .withLatestFrom(ratesStateBehaviorRelay, BiFunction { error: Throwable, state: RatesState ->
-                return@BiFunction if (state.ratesDto == null) {
-                    RatesState.Error(error)
+    private object RetryEvent
+
+    @Suppress("UNUSED_ANONYMOUS_PARAMETER")
+    private fun handlerErrorWithRetry(errors: Flowable<Throwable>): Flowable<RetryEvent> {
+        return errors.zipWith(Flowable.range(1, 3), { error: Throwable, retryIndex: Int -> error to retryIndex })
+            .flatMap { pair ->
+                return@flatMap if (pair.second == 3) {
+                    Flowable.error<RetryEvent>(pair.first)
                 } else {
-                    state
+                    Flowable.timer(1, TimeUnit.SECONDS)
+                        .map { RetryEvent }
                 }
-            })
+            }
     }
 }

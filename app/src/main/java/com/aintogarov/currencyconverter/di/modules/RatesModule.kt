@@ -8,6 +8,7 @@ import com.aintogarov.currencyconverter.domain.RatesDispatchConfig
 import com.aintogarov.currencyconverter.domain.RatesModel
 import dagger.Module
 import dagger.Provides
+import io.reactivex.schedulers.Schedulers
 import javax.inject.Singleton
 
 @Module(
@@ -24,7 +25,8 @@ class RatesModule {
         return RatesModel(
             networkApi = networkApi,
             storage = storage,
-            config = RatesDispatchConfig.DEFAULT
+            config = RatesDispatchConfig.DEFAULT,
+            workerScheduler = Schedulers.io()
         )
     }
 
