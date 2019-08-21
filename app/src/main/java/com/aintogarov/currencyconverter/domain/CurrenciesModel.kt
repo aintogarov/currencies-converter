@@ -12,7 +12,6 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
 import java.math.BigDecimal
-import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
 import kotlin.collections.ArrayList
@@ -32,7 +31,6 @@ class CurrenciesModel(
         .filter { it is RatesState.Loaded }
         .map { it as RatesState.Loaded }
         .map { it.ratesDto }
-        .doOnNext { Timber.d("rates: $it") }
 
     private val updateOrderObservable = rates.withLatestFrom(orderBehaviorRelay,
         BiFunction { ratesDto: RatesDto, order: List<String> ->
@@ -81,13 +79,25 @@ class CurrenciesModel(
             }
 
             val copyList = LinkedList(list)
-            Collections.swap(copyList, 0, currentIndex)
+            copyList.removeAt(currentIndex)
+            copyList.addFirst(list[currentIndex])
 
             orderBehaviorRelay.accept(copyList)
             reorderingBus.accept(ReorderingEvent)
 
             storage.writeOrder(copyList)
         }
+    }
+
+    @Synchronized
+    fun pushMoneyAmount(amount: BigDecimal) {
+        disposable += Observable.just(amount)
+            .withLatestFrom(moneyAmountModel.observe(),
+                BiFunction { moneyAmount: BigDecimal, moneyAmountState: MoneyAmountState ->
+                    moneyAmountState.currency to moneyAmount
+                }
+            )
+            .subscribe { moneyAmountModel.push(it.first, it.second) }
     }
 
     fun onStart() {
@@ -118,12 +128,16 @@ class CurrenciesModel(
         val (moneyAmount, ratesMap, currencyList) = container
         val currentRateToBase: BigDecimal =
             ratesMap[moneyAmount.currency] ?: BigDecimal("1.0")
-        val normalizedAmount = moneyAmount.value * currentRateToBase
+        val normalizedAmount = moneyAmount.value.divide(currentRateToBase, 4, RoundingMode.HALF_UP)
 
         val result = ArrayList<CurrencyAmount>()
         for (currency in currencyList) {
             val rateToBase = ratesMap[currency] ?: continue
-            val value = (normalizedAmount / rateToBase).round(MathContext(2, RoundingMode.HALF_UP))
+            val value = if (currency == moneyAmount.currency) {
+                moneyAmount.value
+            } else {
+                (normalizedAmount * rateToBase).setScale(2, RoundingMode.HALF_UP)
+            }
             result += CurrencyAmount(currency, value)
         }
         return result

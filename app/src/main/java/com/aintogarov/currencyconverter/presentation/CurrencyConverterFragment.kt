@@ -27,16 +27,19 @@ class CurrencyConverterFragment : Fragment() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val currencyClicks: Relay<CurrencyAmount> = PublishRelay.create()
+    private val amountInput: Relay<String> = PublishRelay.create()
     private val viewDisposable: CompositeDisposable = CompositeDisposable()
 
-    private val adapter = CurrenciesAdapter(clickListener = currencyClicks::accept)
+    private val adapter = CurrenciesAdapter(
+        clickListener = currencyClicks::accept,
+        amountInputListener = amountInput::accept
+    )
 
     private val requestFocusRunnable = object : Runnable {
         override fun run() {
             val viewHolder = currenciesRecyclerView.findViewHolderForAdapterPosition(0)
             if (viewHolder != null && viewHolder.adapterPosition == 0) {
                 currenciesRecyclerView.scrollToPosition(0)
-                viewHolder.itemView.requestFocus()
             } else {
                 handler.postDelayed(this, UPDATE_SCROLL_AND_FOCUS_DELAY)
             }
@@ -50,6 +53,7 @@ class CurrencyConverterFragment : Fragment() {
         viewModel = CurrenciesViewModel(
             currenciesModel = appComponent.currenciesModel(),
             currencyClicks = currencyClicks,
+            amountInput = amountInput,
             workerScheduler = Schedulers.computation(),
             uiScheduler = AndroidSchedulers.mainThread()
         )
@@ -64,7 +68,6 @@ class CurrencyConverterFragment : Fragment() {
         currenciesRecyclerView = view.findViewById(R.id.currencies_recycler_view)
         currenciesRecyclerView.layoutManager = LinearLayoutManager(context)
         currenciesRecyclerView.adapter = adapter
-        currenciesRecyclerView.setHasFixedSize(true)
     }
 
     override fun onStart() {

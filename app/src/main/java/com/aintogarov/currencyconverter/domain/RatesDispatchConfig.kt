@@ -11,7 +11,7 @@ class RatesDispatchConfig(
     companion object {
         val DEFAULT = RatesDispatchConfig(
             baseCurrency = "EUR",
-            interval = 10000L,
+            interval = 300000L,
             defaultValue = BigDecimal("100.0"))
     }
 }
