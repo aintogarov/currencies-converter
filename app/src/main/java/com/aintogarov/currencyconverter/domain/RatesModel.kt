@@ -20,13 +20,12 @@ class RatesModel(
     networkApi: NetworkApi,
     storage: Storage,
     private val config: RatesDispatchConfig,
-    workerScheduler: Scheduler
+    private val workerScheduler: Scheduler
 ) {
     private val ratesStateBehaviorRelay = BehaviorRelay.create<RatesState>()
     private var disposable: Disposable? = null
 
     private val network = networkApi.rates(config.baseCurrency)
-        .subscribeOn(workerScheduler)
         .map { ratesDto ->
             val rates = LinkedHashMap<String, BigDecimal>()
             rates[config.baseCurrency] = BigDecimal("1.0")
@@ -41,7 +40,6 @@ class RatesModel(
         .onErrorResumeNext(this::handleTerminalNetworkError)
 
     private val cache = storage.rates(config.baseCurrency)
-        .subscribeOn(workerScheduler)
         .map<RatesState>(RatesState::Loaded)
         .toObservable()
 
@@ -67,6 +65,7 @@ class RatesModel(
             .doOnNext { Timber.d(it.toString()) }
             .doOnError { Timber.e(it) }
             .onErrorReturn(RatesState::Error)
+            .subscribeOn(workerScheduler)
             .subscribe(ratesStateBehaviorRelay::accept)
     }
 

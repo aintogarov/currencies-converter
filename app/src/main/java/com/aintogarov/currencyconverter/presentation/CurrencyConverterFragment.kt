@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aintogarov.currencyconverter.R
 import com.aintogarov.currencyconverter.di.Injector
 import com.aintogarov.currencyconverter.domain.dto.CurrencyAmount
-import com.aintogarov.currencyconverter.domain.LoadingState
+import com.aintogarov.currencyconverter.domain.dto.LoadingState
 import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesAdapter
 import com.aintogarov.currencyconverter.presentation.dto.ClickEvent
 import com.jakewharton.rxrelay2.PublishRelay
@@ -23,7 +23,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
 
 
 class CurrencyConverterFragment : Fragment() {
@@ -100,7 +99,6 @@ class CurrencyConverterFragment : Fragment() {
 
         viewDisposable += viewModel.loadingState()
             .subscribe { state ->
-                Timber.d("loadingState: $state")
                 when (state) {
                     LoadingState.Loaded -> {
                         currenciesRecyclerView.visibility = View.VISIBLE

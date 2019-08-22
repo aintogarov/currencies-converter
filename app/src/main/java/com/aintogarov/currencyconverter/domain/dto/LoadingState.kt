@@ -1,4 +1,4 @@
-package com.aintogarov.currencyconverter.domain
+package com.aintogarov.currencyconverter.domain.dto
 
 
 sealed class LoadingState {

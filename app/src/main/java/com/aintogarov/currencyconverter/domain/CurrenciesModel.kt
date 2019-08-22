@@ -27,12 +27,12 @@ class CurrenciesModel(
     private val reorderingBus = PublishRelay.create<ReorderingEvent>()
     private val orderBehaviorRelay = BehaviorRelay.create<List<String>>()
 
-    private val rates = ratesModel.observe()
+    private val ratesDtoObservable = ratesModel.observe()
         .filter { it is RatesState.Loaded }
         .map { it as RatesState.Loaded }
         .map { it.ratesDto }
 
-    private val updateOrderObservable = rates.withLatestFrom(orderBehaviorRelay,
+    private val updateOrderObservable = ratesDtoObservable.withLatestFrom(orderBehaviorRelay,
         BiFunction { ratesDto: RatesDto, order: List<String> ->
             val currencies = ratesDto.currencies(config.baseCurrency)
             val subtractionToAdd = currencies.subtract(order)
@@ -43,9 +43,9 @@ class CurrenciesModel(
             }
         })
 
-    private val currencies = Observable.combineLatest<MoneyAmountState, RatesDto, List<String>, Container>(
+    private val currencyStateObservable = Observable.combineLatest<MoneyAmountState, RatesDto, List<String>, Container>(
         moneyAmountModel.observe(),
-        rates,
+        ratesDtoObservable,
         orderBehaviorRelay,
         Function3 { moneyAmount: MoneyAmountState, ratesDto: RatesDto, order: List<String> ->
             Container(moneyAmount, ratesDto.rates, order)
@@ -84,9 +84,7 @@ class CurrenciesModel(
             if (currentIndex == 0) return
 
             val currencyAmount = currenciesStateBehaviorRelay.value?.list?.get(currentIndex)
-            currencyAmount?.let {
-                moneyAmountModel.push(it.currency, it.value)
-            }
+            currencyAmount?.let { moneyAmountModel.push(it.currency, it.value) }
 
             val copyList = LinkedList(list)
             copyList.removeAt(currentIndex)
@@ -131,7 +129,7 @@ class CurrenciesModel(
             .distinctUntilChanged()
             .subscribe(orderBehaviorRelay::accept)
 
-        disposable += currencies
+        disposable += currencyStateObservable
             .subscribe(currenciesStateBehaviorRelay::accept)
     }
 
