@@ -25,7 +25,11 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 
 
-class CurrencyConverterFragment : Fragment() {
+class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
+
+    override val currencyItemClicks: Relay<CurrencyAmount> = PublishRelay.create()
+    override val amountInput: Relay<String> = PublishRelay.create()
+    override val retryClicks: Relay<ClickEvent> = PublishRelay.create()
 
     private lateinit var currenciesRecyclerView: RecyclerView
     private lateinit var progressBar: ContentLoadingProgressBar
@@ -33,13 +37,10 @@ class CurrencyConverterFragment : Fragment() {
     private lateinit var viewModel: CurrenciesViewModel
 
     private val handler = Handler(Looper.getMainLooper())
-    private val currencyClicks: Relay<CurrencyAmount> = PublishRelay.create()
-    private val amountInput: Relay<String> = PublishRelay.create()
-    private val retryClicks: Relay<ClickEvent> = PublishRelay.create()
     private val viewDisposable: CompositeDisposable = CompositeDisposable()
 
     private val adapter = CurrenciesAdapter(
-        clickListener = currencyClicks::accept,
+        clickListener = currencyItemClicks::accept,
         amountInputListener = amountInput::accept
     )
 
@@ -60,9 +61,7 @@ class CurrencyConverterFragment : Fragment() {
         val appComponent = Injector.appComponent
         viewModel = CurrenciesViewModel(
             currenciesModel = appComponent.currenciesModel(),
-            currencyClicks = currencyClicks,
-            amountInput = amountInput,
-            retryClicks = retryClicks,
+            viewContract = this,
             workerScheduler = Schedulers.computation(),
             uiScheduler = AndroidSchedulers.mainThread()
         )

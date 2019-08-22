@@ -2,12 +2,10 @@ package com.aintogarov.currencyconverter.presentation
 
 import androidx.recyclerview.widget.DiffUtil
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
-import com.aintogarov.currencyconverter.domain.dto.CurrencyAmount
 import com.aintogarov.currencyconverter.domain.dto.LoadingState
 import com.aintogarov.currencyconverter.domain.dto.ReorderingEvent
 import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesAmountDiffCallback
 import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesWithDiff
-import com.aintogarov.currencyconverter.presentation.dto.ClickEvent
 import com.aintogarov.currencyconverter.presentation.dto.CurrencyAmountItem
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
@@ -20,9 +18,7 @@ import java.math.BigDecimal
 
 class CurrenciesViewModel(
     private val currenciesModel: CurrenciesModel,
-    private val currencyClicks: Observable<CurrencyAmount>,
-    private val amountInput: Observable<String>,
-    private val retryClicks: Observable<ClickEvent>,
+    private val viewContract: CurrenciesViewContract,
     private val workerScheduler: Scheduler,
     private val uiScheduler: Scheduler
 ) {
@@ -60,17 +56,17 @@ class CurrenciesViewModel(
         disposable += currenciesWithDiffObservable
             .subscribe(currenciesWithDiffRelay::accept)
 
-        disposable += currencyClicks
+        disposable += viewContract.currencyItemClicks
             .observeOn(workerScheduler)
             .subscribe { currenciesModel.pushCurrencyToTop(it.currency) }
 
-        disposable += amountInput
+        disposable += viewContract.amountInput
             .observeOn(workerScheduler)
             .map { if (it.isEmpty()) "0" else it }
             .map(::BigDecimal)
             .subscribe { currenciesModel.pushMoneyAmount(it) }
 
-        disposable += retryClicks
+        disposable += viewContract.retryClicks
             .observeOn(workerScheduler)
             .subscribe { currenciesModel.retry() }
     }
