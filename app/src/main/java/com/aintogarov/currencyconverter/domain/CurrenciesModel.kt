@@ -10,7 +10,6 @@ import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Function3
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import timber.log.Timber
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
@@ -21,7 +20,7 @@ class CurrenciesModel(
     private val storage: Storage,
     private val config: RatesDispatchConfig,
     private val moneyAmountModel: MoneyAmountModel,
-    ratesModel: RatesModel
+    private val ratesModel: RatesModel
 ) {
     private val currenciesStateBehaviorRelay = BehaviorRelay.create<CurrenciesState>()
     private val reorderingBus = PublishRelay.create<ReorderingEvent>()
@@ -50,7 +49,6 @@ class CurrenciesModel(
         Function3 { moneyAmount: MoneyAmountState, ratesDto: RatesDto, order: List<String> ->
             Container(moneyAmount, ratesDto.rates, order)
         })
-        .doOnNext { Timber.d("container: ${it.moneyAmountState}; ${it.currencyList}") }
         .filter { container: Container ->
             container.moneyAmountState.currency == container.currencyList.firstOrNull()
         }
@@ -61,6 +59,17 @@ class CurrenciesModel(
 
     fun observe(): Observable<CurrenciesState> {
         return currenciesStateBehaviorRelay
+    }
+
+    fun observeLoadingState(): Observable<LoadingState> {
+        return ratesModel.observe()
+            .map { state ->
+                return@map when (state) {
+                    is RatesState.Error -> LoadingState.Error
+                    is RatesState.Loaded -> LoadingState.Loaded
+                    RatesState.Empty -> LoadingState.Loading
+                }
+            }
     }
 
     fun observeReordering(): Observable<ReorderingEvent> {
@@ -98,6 +107,11 @@ class CurrenciesModel(
                 }
             )
             .subscribe { moneyAmountModel.push(it.first, it.second) }
+    }
+
+    @Synchronized
+    fun retry() {
+        ratesModel.retry()
     }
 
     fun onStart() {

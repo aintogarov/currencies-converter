@@ -3,6 +3,7 @@ package com.aintogarov.currencyconverter.presentation
 import androidx.recyclerview.widget.DiffUtil
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
 import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.LoadingState
 import com.aintogarov.currencyconverter.domain.ReorderingEvent
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
@@ -17,6 +18,7 @@ class CurrenciesViewModel(
     private val currenciesModel: CurrenciesModel,
     private val currencyClicks: Observable<CurrencyAmount>,
     private val amountInput: Observable<String>,
+    private val retryClicks: Observable<ClickEvent>,
     workerScheduler: Scheduler,
     private val uiScheduler: Scheduler
 ) {
@@ -50,6 +52,9 @@ class CurrenciesViewModel(
             .map { if (it.isEmpty()) "0" else it }
             .map(::BigDecimal)
             .subscribe { currenciesModel.pushMoneyAmount(it) }
+
+        disposable += retryClicks
+            .subscribe { currenciesModel.retry() }
     }
 
     fun stop() {
@@ -58,6 +63,11 @@ class CurrenciesViewModel(
 
     fun currenciesWithDiff(): Observable<CurrenciesWithDiff> {
         return currenciesWithDiffRelay.observeOn(uiScheduler)
+    }
+
+    fun loadingState(): Observable<LoadingState> {
+        return currenciesModel.observeLoadingState()
+            .observeOn(uiScheduler)
     }
 
     fun observeReordering(): Observable<ReorderingEvent> {

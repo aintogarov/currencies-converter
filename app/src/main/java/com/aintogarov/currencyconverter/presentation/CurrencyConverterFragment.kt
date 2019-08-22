@@ -6,28 +6,35 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.aintogarov.currencyconverter.R
 import com.aintogarov.currencyconverter.di.Injector
 import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.LoadingState
 import com.jakewharton.rxrelay2.PublishRelay
 import com.jakewharton.rxrelay2.Relay
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 
 
 class CurrencyConverterFragment : Fragment() {
 
     private lateinit var currenciesRecyclerView: RecyclerView
+    private lateinit var progressBar: ContentLoadingProgressBar
+    private lateinit var retryButton: Button
     private lateinit var viewModel: CurrenciesViewModel
 
     private val handler = Handler(Looper.getMainLooper())
     private val currencyClicks: Relay<CurrencyAmount> = PublishRelay.create()
     private val amountInput: Relay<String> = PublishRelay.create()
+    private val retryClicks: Relay<ClickEvent> = PublishRelay.create()
     private val viewDisposable: CompositeDisposable = CompositeDisposable()
 
     private val adapter = CurrenciesAdapter(
@@ -54,6 +61,7 @@ class CurrencyConverterFragment : Fragment() {
             currenciesModel = appComponent.currenciesModel(),
             currencyClicks = currencyClicks,
             amountInput = amountInput,
+            retryClicks = retryClicks,
             workerScheduler = Schedulers.computation(),
             uiScheduler = AndroidSchedulers.mainThread()
         )
@@ -68,6 +76,11 @@ class CurrencyConverterFragment : Fragment() {
         currenciesRecyclerView = view.findViewById(R.id.currencies_recycler_view)
         currenciesRecyclerView.layoutManager = LinearLayoutManager(context)
         currenciesRecyclerView.adapter = adapter
+
+        progressBar = view.findViewById(R.id.progress_bar)
+
+        retryButton = view.findViewById(R.id.retry_button)
+        retryButton.setOnClickListener { retryClicks.accept(ClickEvent) }
     }
 
     override fun onStart() {
@@ -82,6 +95,28 @@ class CurrencyConverterFragment : Fragment() {
 
         viewDisposable += viewModel.observeReordering()
             .subscribe { handler.postDelayed(requestFocusRunnable, UPDATE_SCROLL_AND_FOCUS_DELAY) }
+
+        viewDisposable += viewModel.loadingState()
+            .subscribe { state ->
+                Timber.d("loadingState: $state")
+                when (state) {
+                    LoadingState.Loaded -> {
+                        currenciesRecyclerView.visibility = View.VISIBLE
+                        progressBar.hide()
+                        retryButton.visibility = View.INVISIBLE
+                    }
+                    LoadingState.Loading -> {
+                        currenciesRecyclerView.visibility = View.INVISIBLE
+                        progressBar.show()
+                        retryButton.visibility = View.INVISIBLE
+                    }
+                    LoadingState.Error -> {
+                        currenciesRecyclerView.visibility = View.INVISIBLE
+                        progressBar.hide()
+                        retryButton.visibility = View.VISIBLE
+                    }
+                }
+            }
     }
 
     override fun onPause() {
