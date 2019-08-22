@@ -23,6 +23,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
+import java.lang.ref.WeakReference
 
 
 class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
@@ -35,25 +36,14 @@ class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
     private lateinit var progressBar: ContentLoadingProgressBar
     private lateinit var retryButton: Button
     private lateinit var viewModel: CurrenciesViewModel
+    private lateinit var scrollToTopHelper: ScrollToTopHelper
 
-    private val handler = Handler(Looper.getMainLooper())
     private val viewDisposable: CompositeDisposable = CompositeDisposable()
 
     private val adapter = CurrenciesAdapter(
         clickListener = currencyItemClicks::accept,
         amountInputListener = amountInput::accept
     )
-
-    private val requestFocusRunnable = object : Runnable {
-        override fun run() {
-            val viewHolder = currenciesRecyclerView.findViewHolderForAdapterPosition(0)
-            if (viewHolder != null && viewHolder.adapterPosition == 0) {
-                currenciesRecyclerView.scrollToPosition(0)
-            } else {
-                handler.postDelayed(this, UPDATE_SCROLL_AND_FOCUS_DELAY)
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +71,8 @@ class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
 
         retryButton = view.findViewById(R.id.retry_button)
         retryButton.setOnClickListener { retryClicks.accept(ClickEvent) }
+
+        scrollToTopHelper = ScrollToTopHelper(currenciesRecyclerView)
     }
 
     override fun onStart() {
@@ -94,7 +86,7 @@ class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
             .subscribe { adapter.applyItems(it.currenciesList, it.diffResult) }
 
         viewDisposable += viewModel.observeReordering()
-            .subscribe { handler.postDelayed(requestFocusRunnable, UPDATE_SCROLL_AND_FOCUS_DELAY) }
+            .subscribe { scrollToTopHelper.scrollToTop() }
 
         viewDisposable += viewModel.loadingState()
             .subscribe { state ->
@@ -128,7 +120,29 @@ class CurrencyConverterFragment : Fragment(), CurrenciesViewContract {
         viewModel.stop()
     }
 
-    private companion object {
-        const val UPDATE_SCROLL_AND_FOCUS_DELAY = 8L
+    private class ScrollToTopHelper(recyclerView: RecyclerView) {
+        private val handler = Handler(Looper.getMainLooper())
+        private val recyclerViewReference: WeakReference<RecyclerView> = WeakReference(recyclerView)
+
+        private val requestFocusRunnable = object : Runnable {
+            override fun run() {
+                recyclerViewReference.get()?.let { recyclerView ->
+                    val viewHolder = recyclerView.findViewHolderForAdapterPosition(0)
+                    if (viewHolder != null && viewHolder.adapterPosition == 0) {
+                        recyclerView.scrollToPosition(0)
+                    } else {
+                        handler.postDelayed(this, SCROLL_TO_TOP_DELAY)
+                    }
+                }
+            }
+        }
+
+        fun scrollToTop() {
+            handler.postDelayed(requestFocusRunnable, SCROLL_TO_TOP_DELAY)
+        }
+
+        private companion object {
+            const val SCROLL_TO_TOP_DELAY = 8L
+        }
     }
 }
