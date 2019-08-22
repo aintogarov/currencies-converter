@@ -43,5 +43,4 @@ dependencies {
     implementation libraries.timber
     implementation libraries.roomRuntime
     kapt libraries.roomCompiler
-    implementation libraries.roomRxJava
 }
