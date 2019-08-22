@@ -2,6 +2,8 @@ package com.aintogarov.currencyconverter.domain
 
 import com.aintogarov.currencyconverter.data.network.NetworkApi
 import com.aintogarov.currencyconverter.data.storage.Storage
+import com.aintogarov.currencyconverter.domain.dto.RatesDispatchConfig
+import com.aintogarov.currencyconverter.domain.dto.RatesState
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Flowable
 import io.reactivex.Observable

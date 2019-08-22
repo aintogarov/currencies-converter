@@ -13,8 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.aintogarov.currencyconverter.R
 import com.aintogarov.currencyconverter.di.Injector
-import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.dto.CurrencyAmount
 import com.aintogarov.currencyconverter.domain.LoadingState
+import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesAdapter
+import com.aintogarov.currencyconverter.presentation.dto.ClickEvent
 import com.jakewharton.rxrelay2.PublishRelay
 import com.jakewharton.rxrelay2.Relay
 import io.reactivex.android.schedulers.AndroidSchedulers

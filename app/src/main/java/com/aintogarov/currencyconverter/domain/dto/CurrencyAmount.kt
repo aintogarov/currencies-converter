@@ -1,9 +1,9 @@
-package com.aintogarov.currencyconverter.domain
+package com.aintogarov.currencyconverter.domain.dto
 
 import java.math.BigDecimal
 
 
-data class MoneyAmountState(
+data class CurrencyAmount(
     val currency: String,
     val value: BigDecimal
 )

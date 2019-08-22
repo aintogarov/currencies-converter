@@ -1,4 +1,4 @@
-package com.aintogarov.currencyconverter.domain
+package com.aintogarov.currencyconverter.domain.dto
 
 import java.math.BigDecimal
 
@@ -11,8 +11,9 @@ class RatesDispatchConfig(
     companion object {
         val DEFAULT = RatesDispatchConfig(
             baseCurrency = "EUR",
-            interval = 5000L,
-            defaultValue = BigDecimal("100.0"))
+            interval = 1000000L,
+            defaultValue = BigDecimal("100.0")
+        )
     }
 }
 

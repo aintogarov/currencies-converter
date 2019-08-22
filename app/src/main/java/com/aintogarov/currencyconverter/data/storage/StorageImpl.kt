@@ -3,7 +3,7 @@
 package com.aintogarov.currencyconverter.data.storage
 
 import com.aintogarov.currencyconverter.data.network.dto.RatesDto
-import com.aintogarov.currencyconverter.domain.MoneyAmountState
+import com.aintogarov.currencyconverter.domain.dto.MoneyAmountState
 import com.google.gson.Gson
 import io.reactivex.Maybe
 import io.reactivex.schedulers.Schedulers

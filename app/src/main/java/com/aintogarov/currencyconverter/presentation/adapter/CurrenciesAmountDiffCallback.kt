@@ -1,6 +1,7 @@
-package com.aintogarov.currencyconverter.presentation
+package com.aintogarov.currencyconverter.presentation.adapter
 
 import androidx.recyclerview.widget.DiffUtil
+import com.aintogarov.currencyconverter.presentation.dto.CurrencyAmountItem
 import java.math.BigDecimal
 
 
@@ -29,7 +30,10 @@ class CurrenciesAmountDiffCallback(
         val selected = newItem.selected.takeIf { it != oldItem.selected }
 
         if (moneyAmount != null || selected != null) {
-            return Payload(moneyAmount, selected)
+            return Payload(
+                moneyAmount,
+                selected
+            )
         }
 
         return null

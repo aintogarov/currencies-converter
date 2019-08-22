@@ -4,7 +4,7 @@ import com.aintogarov.currencyconverter.data.network.NetworkApi
 import com.aintogarov.currencyconverter.data.storage.Storage
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
 import com.aintogarov.currencyconverter.domain.MoneyAmountModel
-import com.aintogarov.currencyconverter.domain.RatesDispatchConfig
+import com.aintogarov.currencyconverter.domain.dto.RatesDispatchConfig
 import com.aintogarov.currencyconverter.domain.RatesModel
 import dagger.Module
 import dagger.Provides

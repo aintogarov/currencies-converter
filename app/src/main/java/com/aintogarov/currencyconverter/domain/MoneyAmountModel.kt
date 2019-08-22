@@ -1,6 +1,8 @@
 package com.aintogarov.currencyconverter.domain
 
 import com.aintogarov.currencyconverter.data.storage.Storage
+import com.aintogarov.currencyconverter.domain.dto.MoneyAmountState
+import com.aintogarov.currencyconverter.domain.dto.RatesDispatchConfig
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable

@@ -7,7 +7,6 @@ import com.aintogarov.currencyconverter.di.modules.StorageModule
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
 import com.aintogarov.currencyconverter.domain.MoneyAmountModel
 import com.aintogarov.currencyconverter.domain.RatesModel
-import com.aintogarov.currencyconverter.utils.KeyboardModel
 import dagger.Component
 import javax.inject.Singleton
 
@@ -24,5 +23,4 @@ interface AppComponent {
     fun ratesModel(): RatesModel
     fun amountModel(): MoneyAmountModel
     fun currenciesModel(): CurrenciesModel
-    fun keyboardModel(): KeyboardModel
 }

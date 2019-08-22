@@ -1,4 +1,4 @@
-package com.aintogarov.currencyconverter.presentation
+package com.aintogarov.currencyconverter.presentation.adapter
 
 import android.content.Context
 import android.text.Editable
@@ -12,7 +12,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.aintogarov.currencyconverter.R
-import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.dto.CurrencyAmount
+import com.aintogarov.currencyconverter.presentation.dto.CurrencyAmountItem
 import com.aintogarov.currencyconverter.utils.MoneyTextFilter
 import java.math.BigDecimal
 

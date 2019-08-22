@@ -2,9 +2,13 @@ package com.aintogarov.currencyconverter.presentation
 
 import androidx.recyclerview.widget.DiffUtil
 import com.aintogarov.currencyconverter.domain.CurrenciesModel
-import com.aintogarov.currencyconverter.domain.CurrencyAmount
+import com.aintogarov.currencyconverter.domain.dto.CurrencyAmount
 import com.aintogarov.currencyconverter.domain.LoadingState
-import com.aintogarov.currencyconverter.domain.ReorderingEvent
+import com.aintogarov.currencyconverter.domain.dto.ReorderingEvent
+import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesAmountDiffCallback
+import com.aintogarov.currencyconverter.presentation.adapter.CurrenciesWithDiff
+import com.aintogarov.currencyconverter.presentation.dto.ClickEvent
+import com.aintogarov.currencyconverter.presentation.dto.CurrencyAmountItem
 import com.jakewharton.rxrelay2.BehaviorRelay
 import io.reactivex.Observable
 import io.reactivex.Scheduler
@@ -24,20 +28,31 @@ class CurrenciesViewModel(
 ) {
     private val disposable: CompositeDisposable = CompositeDisposable()
     private val currenciesWithDiffRelay = BehaviorRelay.createDefault(
-        CurrenciesWithDiff(currenciesList = emptyList(), diffResult = null)
+        CurrenciesWithDiff(
+            currenciesList = emptyList(),
+            diffResult = null
+        )
     )
 
     private val currenciesWithDiffObservable = currenciesModel.observe()
         .observeOn(workerScheduler)
         .map { currenciesState ->
             currenciesState.list.mapIndexed { index, currencyAmount ->
-                CurrencyAmountItem(currencyAmount, selected = (index == 0))
+                CurrencyAmountItem(
+                    currencyAmount,
+                    selected = (index == 0)
+                )
             }
         }
         .withLatestFrom(currenciesWithDiffRelay,
             BiFunction { new: List<CurrencyAmountItem>, currenciesWithDiff: CurrenciesWithDiff ->
                 val old = currenciesWithDiff.currenciesList
-                val diffResult = DiffUtil.calculateDiff(CurrenciesAmountDiffCallback(old, new))
+                val diffResult = DiffUtil.calculateDiff(
+                    CurrenciesAmountDiffCallback(
+                        old,
+                        new
+                    )
+                )
                 CurrenciesWithDiff(new, diffResult)
             })
 
